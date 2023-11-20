@@ -89,7 +89,10 @@ func (scanner *Scanner) scanToken() {
 		} else if scanner.match('*') {
 			// A multiline comment is here and goes until the next */
 			for scanner.peek(0) != '*' && scanner.peek(1) != '/' && !scanner.isAtEnd() {
-				scanner.advance()
+				currentChar := scanner.advance()
+				if currentChar == '\n' {
+					scanner.line++
+				}
 			}
 			scanner.advance()
 			scanner.advance()
@@ -99,6 +102,8 @@ func (scanner *Scanner) scanToken() {
 	case '\t':
 	case '\n':
 		scanner.line++
+	case '"':
+		scanner.string()
 	default:
 		ReportError(scanner.line, "Unexpected character.")
 	}
@@ -132,4 +137,22 @@ func (scanner *Scanner) peek(position uint) byte {
 	}
 
 	return scanner.source[scanner.current+position]
+}
+
+func (scanner *Scanner) string() {
+	for scanner.peek(0) != '"' && !scanner.isAtEnd() {
+		if scanner.peek(0) == '\n' {
+			// increment the current line in case we find a new line character
+			scanner.line++
+		}
+		scanner.advance()
+	}
+
+	if scanner.isAtEnd() {
+		ReportError(scanner.line, "Unterminated string.")
+		return
+	}
+	scanner.advance()
+	value := scanner.source[scanner.start+1 : scanner.current-1]
+	scanner.addToken("STRING", value)
 }
