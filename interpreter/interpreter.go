@@ -78,14 +78,10 @@ func run(sourceCode string) {
 	parser := NewParser(tokens)
 	expression := parser.Parse()
 	fmt.Printf("expression is %v\n", expression)
+	println(expression.print())
 	if HadError {
 		return
 	}
-
-	for _, token := range tokens {
-		fmt.Printf("token is %v \n", token.String())
-	}
-	print("running code now")
 }
 
 // ReportError tells us what line an error occurred and what the error message is

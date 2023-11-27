@@ -46,7 +46,7 @@ func NewParser(tokens []Token) *Parser {
 }
 
 // Parse is the entry point to the parser
-func (p *Parser) Parse() interface{} {
+func (p *Parser) Parse() Expr {
 	expression := p.expression()
 	if len(p.errors) != 0 {
 		return nil
@@ -55,12 +55,12 @@ func (p *Parser) Parse() interface{} {
 }
 
 // expression is lowest level rule
-func (p *Parser) expression() interface{} {
+func (p *Parser) expression() Expr {
 	return p.equality()
 }
 
 // equality is for getting equality values in the grammar rule
-func (p *Parser) equality() interface{} {
+func (p *Parser) equality() Expr {
 	expr := p.comparison()
 
 	for p.match("BANG_EQUAL", "EQUAL") {
@@ -72,7 +72,7 @@ func (p *Parser) equality() interface{} {
 }
 
 // comparison is for getting comparison values in the grammar rule
-func (p *Parser) comparison() interface{} {
+func (p *Parser) comparison() Expr {
 	expr := p.term()
 
 	for p.match("GREATER", "GREATER_EQUAL", "LESS", "LESS_EQUAL") {
@@ -84,7 +84,7 @@ func (p *Parser) comparison() interface{} {
 }
 
 // term is for getting term values in the grammar rule
-func (p *Parser) term() interface{} {
+func (p *Parser) term() Expr {
 	expr := p.factor()
 
 	for p.match("PLUS", "MINUS") {
@@ -96,7 +96,7 @@ func (p *Parser) term() interface{} {
 }
 
 // factor is for getting factor values in the grammar rule
-func (p *Parser) factor() interface{} {
+func (p *Parser) factor() Expr {
 	expr := p.unary()
 
 	for p.match("SLASH", "STAR") {
@@ -108,7 +108,7 @@ func (p *Parser) factor() interface{} {
 }
 
 // unary is for getting unary values in the grammar rule
-func (p *Parser) unary() interface{} {
+func (p *Parser) unary() Expr {
 	if p.match("BANG", "MINUS") {
 		operator := p.previous()
 		right := p.unary()
@@ -118,7 +118,7 @@ func (p *Parser) unary() interface{} {
 }
 
 // primary is for getting primary values in the grammar rule. It's the highest precedence
-func (p *Parser) primary() interface{} {
+func (p *Parser) primary() Expr {
 	if p.match("FALSE") {
 		return Literal{value: false}
 	}

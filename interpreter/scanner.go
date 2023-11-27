@@ -98,6 +98,8 @@ func (scanner *Scanner) scanToken() {
 			}
 			scanner.advance()
 			scanner.advance()
+		} else {
+			scanner.addToken("SLASH", nil)
 		}
 	case ' ':
 	case '\r':
