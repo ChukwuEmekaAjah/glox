@@ -75,6 +75,12 @@ func runPrompt() error {
 func run(sourceCode string) {
 	scanner := NewScanner(sourceCode)
 	tokens := scanner.ScanTokens()
+	parser := NewParser(tokens)
+	expression := parser.Parse()
+	fmt.Printf("expression is %v\n", expression)
+	if HadError {
+		return
+	}
 
 	for _, token := range tokens {
 		fmt.Printf("token is %v \n", token.String())
@@ -91,4 +97,13 @@ func ReportError(line uint, message string) {
 func Report(line uint, where string, message string) {
 	fmt.Printf("[line %d] Error %s: %s", line, where, message)
 	HadError = true
+}
+
+// Error reports error found in the parser
+func Error(token Token, message string) {
+	if token.tokenType == "EOF" {
+		Report(token.line, "at end", message)
+	} else {
+		Report(token.line, fmt.Sprintf("at '%v'", token.lexeme), message)
+	}
 }
