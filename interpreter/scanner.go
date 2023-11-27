@@ -1,5 +1,7 @@
 package interpreter
 
+import "strconv"
+
 // Scanner represents a source code scanner
 type Scanner struct {
 	source  string
@@ -105,7 +107,13 @@ func (scanner *Scanner) scanToken() {
 	case '"':
 		scanner.string()
 	default:
-		ReportError(scanner.line, "Unexpected character.")
+		if scanner.isDigit(c) {
+			scanner.number()
+		} else if scanner.isAlpha(scanner.peek(0)) || scanner.isDigit(scanner.peek(0)) {
+			scanner.identifier()
+		} else {
+			ReportError(scanner.line, "Unexpected character.")
+		}
 	}
 }
 
@@ -155,4 +163,42 @@ func (scanner *Scanner) string() {
 	scanner.advance()
 	value := scanner.source[scanner.start+1 : scanner.current-1]
 	scanner.addToken("STRING", value)
+}
+
+func (scanner Scanner) isDigit(ch byte) bool {
+	return ch >= '0' && ch <= '9'
+}
+
+func (scanner Scanner) isAlpha(ch byte) bool {
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '_')
+}
+
+func (scanner *Scanner) number() {
+	for scanner.isDigit(scanner.peek(0)) {
+		scanner.advance()
+	}
+
+	if scanner.peek(0) == '.' && scanner.isDigit(scanner.peek(1)) {
+		scanner.advance()
+		for scanner.isDigit(scanner.peek(0)) {
+			scanner.advance()
+		}
+	}
+
+	num, _ := strconv.ParseFloat(scanner.source[scanner.start:scanner.current], 64)
+	scanner.addToken("NUMBER", num)
+}
+
+func (scanner *Scanner) identifier() {
+	for scanner.isAlpha(scanner.peek(0)) || scanner.isDigit(scanner.peek(0)) {
+		scanner.advance()
+	}
+
+	text := scanner.source[scanner.start:scanner.current]
+	tokenType, exists := Keywords[text]
+
+	if !exists {
+		tokenType = "IDENTIFIER"
+	}
+	scanner.addToken(tokenType, nil)
 }
