@@ -40,7 +40,7 @@ type Parser struct {
 	errors  []error
 }
 
-// New Parser returns a new instance of our parser
+// NewParser returns a new instance of our parser
 func NewParser(tokens []Token) *Parser {
 	return &Parser{tokens: tokens, current: 0, errors: make([]error, 0)}
 }

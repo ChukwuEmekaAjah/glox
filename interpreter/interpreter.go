@@ -10,8 +10,12 @@ import (
 // HadError specifies if an error was encountered
 var HadError bool
 
+// HadRuntimeError specifies errors generated at interpretation time
+var HadRuntimeError bool
+
 // Interpreter is an instance of the interpreter
 type Interpreter struct {
+	expression Expr
 }
 
 // Start starts the interperter to in REPL mode or file execution mode
@@ -21,19 +25,34 @@ func (interpreter *Interpreter) Start() {
 		println("Usage: glox [script]")
 		os.Exit(64)
 	} else if len(args) == 2 {
-		err := runFile(args[1])
+		err := interpreter.runFile(args[1])
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		err := runPrompt()
+		err := interpreter.runPrompt()
 		if err != nil {
 			panic(err)
 		}
 	}
 }
 
-func runFile(filePath string) error {
+// Interpret evaluates the code
+func (interpreter *Interpreter) Interpret() {
+	value := evaluate(interpreter.expression)
+
+	if len(Errors) > 0 {
+		for _, err := range Errors {
+			fmt.Println(err)
+		}
+
+		return
+	}
+
+	fmt.Print(value)
+}
+
+func (interpreter *Interpreter) runFile(filePath string) error {
 	file, err := os.Open(filePath)
 
 	if err != nil {
@@ -43,16 +62,20 @@ func runFile(filePath string) error {
 
 	sourceCode, err := io.ReadAll(file)
 
-	run(string(sourceCode))
+	interpreter.run(string(sourceCode))
 
 	if HadError {
 		os.Exit(65)
 	}
 
+	if HadRuntimeError {
+		os.Exit(70)
+	}
+
 	return err
 }
 
-func runPrompt() error {
+func (interpreter *Interpreter) runPrompt() error {
 
 	for {
 		print("> ")
@@ -66,19 +89,20 @@ func runPrompt() error {
 		if expression == "" {
 			return nil
 		}
-		run(string(expression))
+		interpreter.run(string(expression))
 		print("\n")
 		HadError = false
 	}
 }
 
-func run(sourceCode string) {
+func (interpreter *Interpreter) run(sourceCode string) {
 	scanner := NewScanner(sourceCode)
 	tokens := scanner.ScanTokens()
 	parser := NewParser(tokens)
 	expression := parser.Parse()
-	fmt.Printf("expression is %v\n", expression)
 	println(expression.print())
+	interpreter.expression = expression
+	interpreter.Interpret()
 	if HadError {
 		return
 	}
@@ -102,4 +126,10 @@ func Error(token Token, message string) {
 	} else {
 		Report(token.line, fmt.Sprintf("at '%v'", token.lexeme), message)
 	}
+}
+
+// RuntimeError reports interpreter runtime error
+func RuntimeError(token Token, message string) {
+	fmt.Printf("%s\n[line %d]", message, token.line)
+	HadRuntimeError = true
 }

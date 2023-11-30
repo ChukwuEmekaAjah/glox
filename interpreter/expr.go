@@ -11,7 +11,7 @@ import "fmt"
 // operator -> "-" | "+" | "/" | "" etc
 
 // Visitor takes an expression struct and returns an interface
-type Visitor func(interface{}) interface{}
+type Visitor func(Expr) interface{}
 
 // Expr is base parser input
 type Expr interface {
